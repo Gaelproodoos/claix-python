@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "claix-ai"
+version = "1.0.0"
+description = "Official Python SDK for the Claix document intelligence API (OpenAPI 1.8.2). Typed extraction, document memory, knowledge spaces, and agent-framework tools."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+  { name = "Claix", email = "info@claix.dev" },
+]
+keywords = [
+  "claix",
+  "document-intelligence",
+  "pdf-to-json",
+  "excel-to-json",
+  "ai-agents",
+  "langchain",
+  "langgraph",
+  "crewai",
+  "llamaindex",
+  "a2a",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "httpx>=0.27.0",
+  "pydantic>=2.6.0",
+]
+
+[project.optional-dependencies]
+langchain = ["langchain-core>=0.3.0"]
+crewai = ["crewai>=0.1.0"]
+llamaindex = ["llama-index-core>=0.10.0"]
+all = [
+  "langchain-core>=0.3.0",
+  "crewai>=0.1.0",
+  "llama-index-core>=0.10.0",
+]
+
+[project.urls]
+Homepage = "https://www.claix.dev"
+Documentation = "https://www.claix.dev/documentation"
+OpenAPI = "https://www.claix.dev/openapi.yaml"
+Source = "https://github.com/Gaelproodoos/claix-interfaz"
+
+[tool.hatch.build.targets.wheel]
+packages = ["claix"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/claix",
+  "/README.md",
+  "/LICENSE",
+  "/pyproject.toml",
+]
