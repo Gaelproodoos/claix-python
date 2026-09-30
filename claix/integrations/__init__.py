@@ -26,9 +26,11 @@ def infer_extract_kind(file_path: str) -> str:
         return "document"
     if suffix in {".jpeg", ".jpg", ".png", ".webp", ".heic", ".heif"}:
         return "image"
+    if suffix in {".mp3", ".wav", ".m4a", ".ogg"}:
+        return "audio"
     raise ClaixValidationError(
         f"Cannot infer Claix extractor from extension {suffix or '(none)'}. "
-        "Use a PDF, Excel/CSV, Word/text, or supported image file."
+        "Use a PDF, Excel/CSV, Word/text, supported image, or audio file."
     )
 
 
@@ -49,4 +51,6 @@ def extract_by_path(
         return client.extract.excel(file, schema_id, space_id=space_id, is_agent_mode=is_agent_mode)
     if detected == "image":
         return client.extract.image(file, schema_id, space_id=space_id, is_agent_mode=is_agent_mode)
+    if detected == "audio":
+        return client.extract.audio(file, schema_id, space_id=space_id, is_agent_mode=is_agent_mode)
     return client.extract.document(file, schema_id, space_id=space_id, is_agent_mode=is_agent_mode)

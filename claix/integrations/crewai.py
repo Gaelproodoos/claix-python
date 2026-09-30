@@ -41,7 +41,10 @@ class ClaixDocumentToolArgs(BaseModel):
 class ClaixKnowledgeSpaceToolArgs(BaseModel):
     space_id: str = Field(description="Knowledge-space UUID to query.")
     questions: list[str] = Field(
-        description="Up to 5 cross-document questions, 400 characters each."
+        description=(
+            "Up to 5 cross-document questions, 400 characters each. "
+            'Strings are sent as format "string".'
+        )
     )
 
 
@@ -98,4 +101,85 @@ class ClaixKnowledgeSpaceTool(_CrewBaseTool):  # type: ignore[misc]
 
     def _run(self, space_id: str, questions: list[str]) -> str:
         result = (self.client or ClaixClient()).spaces.ask(space_id, questions)
+        return result.model_dump_json()
+
+
+class ClaixAddToSpaceArgs(BaseModel):
+    document_id: str = Field(description="Persisted document UUID with no space_id.")
+    space_id: str = Field(description="Destination knowledge-space UUID.")
+
+
+class ClaixRemoveFromSpaceArgs(BaseModel):
+    document_id: str = Field(description="Document UUID to detach from its space.")
+
+
+class ClaixReplaceDocumentArgs(BaseModel):
+    document_id: str = Field(description="Stable document UUID whose content is replaced.")
+    new_content_document_id: str = Field(description="Source document UUID, deleted after the swap.")
+
+
+class ClaixAddToSpaceTool(_CrewBaseTool):  # type: ignore[misc]
+    """Assign a document with no space_id to a knowledge space."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
+    name: str = "claix_add_to_space"
+    description: str = (
+        "Add a persisted Claix document to a knowledge space. "
+        "The document must not already have a space_id."
+    )
+    args_schema: Type[BaseModel] = ClaixAddToSpaceArgs
+    client: ClaixClient | None = None
+
+    def __init__(self, client: ClaixClient | None = None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.client = client or ClaixClient()
+
+    def _run(self, document_id: str, space_id: str) -> str:
+        result = (self.client or ClaixClient()).spaces.add(document_id, space_id)
+        return result.model_dump_json()
+
+
+class ClaixRemoveFromSpaceTool(_CrewBaseTool):  # type: ignore[misc]
+    """Detach a document from its knowledge space without deleting the file."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
+    name: str = "claix_remove_from_space"
+    description: str = (
+        "Remove a document from its Claix knowledge space without deleting the file."
+    )
+    args_schema: Type[BaseModel] = ClaixRemoveFromSpaceArgs
+    client: ClaixClient | None = None
+
+    def __init__(self, client: ClaixClient | None = None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.client = client or ClaixClient()
+
+    def _run(self, document_id: str) -> str:
+        result = (self.client or ClaixClient()).spaces.remove_document(document_id)
+        return result.model_dump_json()
+
+
+class ClaixReplaceDocumentTool(_CrewBaseTool):  # type: ignore[misc]
+    """Replace persisted document content while keeping document_id."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
+    name: str = "claix_replace_document"
+    description: str = (
+        "Replace a persisted document's content from another document, keep document_id, "
+        "and delete the source."
+    )
+    args_schema: Type[BaseModel] = ClaixReplaceDocumentArgs
+    client: ClaixClient | None = None
+
+    def __init__(self, client: ClaixClient | None = None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.client = client or ClaixClient()
+
+    def _run(self, document_id: str, new_content_document_id: str) -> str:
+        result = (self.client or ClaixClient()).context.replace(
+            document_id, new_content_document_id
+        )
         return result.model_dump_json()

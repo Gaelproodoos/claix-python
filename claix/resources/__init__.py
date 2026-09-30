@@ -2,27 +2,51 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from io import BufferedReader, BytesIO
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 from claix.exceptions import ClaixValidationError
 
 FileInput = str | Path | bytes | bytearray | BinaryIO | tuple[str, bytes]
+QuestionFormat = str
+QUESTION_FORMATS = frozenset({"string", "int", "boolean", "timestamp", "array"})
+QuestionInput = str | Mapping[str, Any]
 
 
-def validate_questions(questions: Sequence[str]) -> list[str]:
-    """Enforce OpenAPI window/space-context limits: 1–5 questions, ≤400 chars."""
-    cleaned = [str(q).strip() for q in questions if str(q).strip()]
+def validate_questions(questions: Sequence[QuestionInput]) -> list[dict[str, str]]:
+    """Normalize questions to ``{question, format}`` (1–5 items, ≤400 chars).
+
+    A plain string is sent as ``format: "string"``.
+    """
+    cleaned: list[dict[str, str]] = []
+    for raw in questions:
+        if isinstance(raw, str):
+            question = raw.strip()
+            fmt = "string"
+        elif isinstance(raw, Mapping):
+            question = str(raw.get("question") or "").strip()
+            fmt = str(raw.get("format") or "string").strip()
+        else:
+            raise ClaixValidationError(
+                "Each question must be a string or an object with question and format."
+            )
+        if not question:
+            continue
+        if fmt not in QUESTION_FORMATS:
+            raise ClaixValidationError(
+                f"format must be one of: {', '.join(sorted(QUESTION_FORMATS))} (got {fmt!r})."
+            )
+        cleaned.append({"question": question, "format": fmt})
     if not cleaned:
         raise ClaixValidationError("At least one question is required.")
     if len(cleaned) > 5:
         raise ClaixValidationError("A maximum of 5 questions is allowed per call.")
-    for question in cleaned:
-        if len(question) > 400:
+    for item in cleaned:
+        if len(item["question"]) > 400:
             raise ClaixValidationError(
-                f"Each question must be at most 400 characters (got {len(question)})."
+                f"Each question must be at most 400 characters (got {len(item['question'])})."
             )
     return cleaned
 

@@ -5,10 +5,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from claix.resources import validate_questions
+from claix.resources import QuestionInput, validate_questions
 from claix.models import (
     DeleteDocumentSuccessResponse,
     GetDocumentSuccessResponse,
+    ReplaceDocumentSuccessResponse,
     WindowContextSuccessResponse,
 )
 
@@ -30,7 +31,7 @@ class ContextResource:
     def ask(
         self,
         document_id: str,
-        questions: Sequence[str],
+        questions: Sequence[QuestionInput],
     ) -> WindowContextSuccessResponse:
         body = {"questions": validate_questions(questions)}
         payload = self._client.request_json(
@@ -47,6 +48,22 @@ class ContextResource:
         )
         return DeleteDocumentSuccessResponse.model_validate(payload)
 
+    def replace(
+        self,
+        document_id: str,
+        new_content_document_id: str,
+    ) -> ReplaceDocumentSuccessResponse:
+        """POST /replace-document. Keeps document_id and deletes the source document."""
+        payload = self._client.request_json(
+            "POST",
+            f"{self._client.origin}/replace-document",
+            json={
+                "document_id": document_id,
+                "new_content_document_id": new_content_document_id,
+            },
+        )
+        return ReplaceDocumentSuccessResponse.model_validate(payload)
+
 
 class AsyncContextResource:
     def __init__(self, client: AsyncClaixClient) -> None:
@@ -62,7 +79,7 @@ class AsyncContextResource:
     async def ask(
         self,
         document_id: str,
-        questions: Sequence[str],
+        questions: Sequence[QuestionInput],
     ) -> WindowContextSuccessResponse:
         body = {"questions": validate_questions(questions)}
         payload = await self._client.request_json(
@@ -78,3 +95,18 @@ class AsyncContextResource:
             f"{self._client.origin}/delete-document/{document_id}",
         )
         return DeleteDocumentSuccessResponse.model_validate(payload)
+
+    async def replace(
+        self,
+        document_id: str,
+        new_content_document_id: str,
+    ) -> ReplaceDocumentSuccessResponse:
+        payload = await self._client.request_json(
+            "POST",
+            f"{self._client.origin}/replace-document",
+            json={
+                "document_id": document_id,
+                "new_content_document_id": new_content_document_id,
+            },
+        )
+        return ReplaceDocumentSuccessResponse.model_validate(payload)

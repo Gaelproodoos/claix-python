@@ -1,4 +1,4 @@
-"""Pydantic v2 models generated from Claix OpenAPI 1.8.2."""
+"""Pydantic v2 models for the Claix API."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ SchemaType = Literal[
     "doc-json",
     "img-json",
     "txt-json",
+    "audio-json",
 ]
 
 FieldType = Literal["string", "integer", "number", "boolean"]
@@ -92,6 +93,7 @@ class ImgJsonSuccessResponse(ClaixModel):
 
 
 TxtJsonSuccessResponse = DocJsonSuccessResponse
+AudioJsonSuccessResponse = ImgJsonSuccessResponse
 
 
 class AgentData(ClaixModel):
@@ -116,6 +118,10 @@ class AgentImgJsonSuccessResponse(ImgJsonSuccessResponse):
     agent_data: dict[str, Any] | AgentData | None = None
 
 
+class AgentAudioJsonSuccessResponse(AudioJsonSuccessResponse):
+    agent_data: dict[str, Any] | AgentData | None = None
+
+
 class GetDocumentSuccessResponse(ClaixModel):
     success: bool
     document_id: str
@@ -130,13 +136,13 @@ class DeleteDocumentSuccessResponse(ClaixModel):
 
 
 class WindowContextRequest(ClaixModel):
-    questions: list[str] = Field(min_length=1, max_length=5)
+    questions: list[Any] = Field(min_length=1, max_length=5)
 
 
 class WindowContextSuccessResponse(ClaixModel):
-    user_ask: list[str]
-    ia_response: list[str | None] = Field(
-        description="Answers aligned 1:1 with user_ask. Native null when the value is not in the document.",
+    user_ask: list[Any]
+    ia_response: list[Any] = Field(
+        description="Answers aligned 1:1 with user_ask. Typed by format, or {value, source} when source verification is on. Native null when missing.",
     )
 
 
@@ -160,14 +166,45 @@ class DeleteSpaceSuccessResponse(ClaixModel):
 
 
 class SpaceContextRequest(ClaixModel):
-    questions: list[str] = Field(min_length=1, max_length=5)
+    questions: list[Any] = Field(min_length=1, max_length=5)
 
 
 class SpaceContextSuccessResponse(ClaixModel):
-    user_ask: list[str]
-    ia_response: list[str | None] = Field(
-        description="Answers aligned 1:1 with user_ask. Native null when the value is not in any document in the space.",
+    user_ask: list[Any]
+    ia_response: list[Any] = Field(
+        description="Answers aligned 1:1 with user_ask. Typed by format, or {value, source} when source verification is on. Native null when missing.",
     )
+
+
+class AddSpaceSuccessResponse(ClaixModel):
+    success: bool | None = None
+    document_id: str | None = None
+    space_id: str | None = None
+    space_name: str | None = None
+    file_name: str | None = None
+    version: int | float | None = None
+    message: str | None = None
+
+
+class ReplaceDocumentSuccessResponse(ClaixModel):
+    success: bool | None = None
+    swap_id: str | None = None
+    document_id: str | None = None
+    source_document_id: str | None = None
+    file_name: str | None = None
+    version: int | float | None = None
+    swaps_count: int | float | None = None
+    message: str | None = None
+
+
+class RemoveDocumentFromSpaceSuccessResponse(ClaixModel):
+    success: bool | None = None
+    document_id: str | None = None
+    previous_space_id: str | None = None
+    espacio_id: str | None = None
+    file_name: str | None = None
+    version: int | float | None = None
+    message: str | None = None
 
 
 class AgentFieldDefinition(ClaixModel):
@@ -191,6 +228,7 @@ class SchemaItem(ClaixModel):
     resumen_agent: str | None = None
     window_context: bool | None = None
     window_time: WindowTime | int | str | None = None
+    cita_por_campo: bool | None = None
     created_at: datetime | str | None = None
 
 
@@ -209,6 +247,7 @@ class CreateSchemaRequest(ClaixModel):
     resumen_agent: str | None = Field(default=None, max_length=500)
     window_context: bool | None = None
     window_time: WindowTime | int | str | None = None
+    cita_por_campo: bool | None = None
 
 
 class CreateSchemaResponse(ClaixModel):

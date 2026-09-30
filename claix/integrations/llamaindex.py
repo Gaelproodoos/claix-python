@@ -21,7 +21,14 @@ except ImportError:  # pragma: no cover
 class ClaixToolSpec(_LlamaBaseToolSpec):  # type: ignore[misc]
     """LlamaIndex ToolSpec exposing extract, document Q&A, and knowledge-space Q&A."""
 
-    spec_functions = ["extract_document", "ask_document", "ask_knowledge_space"]
+    spec_functions = [
+        "extract_document",
+        "ask_document",
+        "ask_knowledge_space",
+        "add_to_space",
+        "remove_from_space",
+        "replace_document",
+    ]
 
     def __init__(self, client: ClaixClient | None = None) -> None:
         self.client = client or ClaixClient()
@@ -53,7 +60,9 @@ class ClaixToolSpec(_LlamaBaseToolSpec):  # type: ignore[misc]
     def ask_document(self, document_id: str, questions: list[str]) -> str:
         """Ask up to 5 questions about a persisted document (document_id).
 
-        Missing evidence is returned as native JSON null in ia_response.
+        Each string is sent as format "string". Pass objects with question and
+        format via ClaixClient.context.ask when you need int, boolean, timestamp, or array.
+        Missing evidence is native JSON null in ia_response.
         """
         result = self.client.context.ask(document_id, questions)
         return result.model_dump_json()
@@ -61,4 +70,19 @@ class ClaixToolSpec(_LlamaBaseToolSpec):  # type: ignore[misc]
     def ask_knowledge_space(self, space_id: str, questions: list[str]) -> str:
         """Ask up to 5 cross-document questions over a knowledge space (space_id)."""
         result = self.client.spaces.ask(space_id, questions)
+        return result.model_dump_json()
+
+    def add_to_space(self, document_id: str, space_id: str) -> str:
+        """Assign a persisted document with no space_id to a knowledge space."""
+        result = self.client.spaces.add(document_id, space_id)
+        return result.model_dump_json()
+
+    def remove_from_space(self, document_id: str) -> str:
+        """Detach a document from its knowledge space without deleting the file."""
+        result = self.client.spaces.remove_document(document_id)
+        return result.model_dump_json()
+
+    def replace_document(self, document_id: str, new_content_document_id: str) -> str:
+        """Replace a document's content, keep document_id, and delete the source."""
+        result = self.client.context.replace(document_id, new_content_document_id)
         return result.model_dump_json()

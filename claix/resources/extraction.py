@@ -9,10 +9,12 @@ from claix.models import (
     AgentDocJsonSuccessResponse,
     AgentExcelJsonSuccessResponse,
     AgentImgJsonSuccessResponse,
+    AgentAudioJsonSuccessResponse,
     AgentPdfJsonSuccessResponse,
     DocJsonSuccessResponse,
     ExcelJsonSuccessResponse,
     ImgJsonSuccessResponse,
+    AudioJsonSuccessResponse,
     PdfJsonSuccessResponse,
 )
 from claix.resources import FileInput, prepare_file
@@ -104,6 +106,26 @@ class ExtractionResource:
         if is_agent_mode:
             return AgentImgJsonSuccessResponse.model_validate(payload)
         return ImgJsonSuccessResponse.model_validate(payload)
+
+    def audio(
+        self,
+        file: FileInput,
+        schema_id: str,
+        space_id: str | None = None,
+        is_agent_mode: bool = False,
+    ) -> AudioJsonSuccessResponse | AgentAudioJsonSuccessResponse:
+        payload = self._upload(
+            "audio-json",
+            file,
+            schema_id,
+            space_id,
+            is_agent_mode,
+            default_name="audio.mp3",
+            content_type="audio/mpeg",
+        )
+        if is_agent_mode:
+            return AgentAudioJsonSuccessResponse.model_validate(payload)
+        return AudioJsonSuccessResponse.model_validate(payload)
 
     def text(
         self,
@@ -258,6 +280,26 @@ class AsyncExtractionResource:
         if is_agent_mode:
             return AgentImgJsonSuccessResponse.model_validate(payload)
         return ImgJsonSuccessResponse.model_validate(payload)
+
+    async def audio(
+        self,
+        file: FileInput,
+        schema_id: str,
+        space_id: str | None = None,
+        is_agent_mode: bool = False,
+    ) -> AudioJsonSuccessResponse | AgentAudioJsonSuccessResponse:
+        payload = await self._upload(
+            "audio-json",
+            file,
+            schema_id,
+            space_id,
+            is_agent_mode,
+            default_name="audio.mp3",
+            content_type="audio/mpeg",
+        )
+        if is_agent_mode:
+            return AgentAudioJsonSuccessResponse.model_validate(payload)
+        return AudioJsonSuccessResponse.model_validate(payload)
 
     async def text(
         self,

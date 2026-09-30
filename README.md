@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/claix-ai.svg)](https://pypi.org/project/claix-ai/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Official typed Python client for the [Claix](https://www.claix.dev) document intelligence API (**OpenAPI 1.8.2**).
+Official typed Python client for the [Claix](https://www.claix.dev) document intelligence API.
 
 Extract PDFs, Excel, Word, images, and text into schema-validated JSON. Query persisted documents and knowledge spaces. Drop the same client into **LangChain / LangGraph**, **CrewAI**, and **LlamaIndex**.
 
@@ -82,6 +82,7 @@ tools = [
     ClaixExtractTool(client=client),
     ClaixDocumentContextTool(client=client),
     ClaixSpaceContextTool(client=client),
+    # also: ClaixAddToSpaceTool, ClaixRemoveFromSpaceTool, ClaixReplaceDocumentTool
 ]
 agent = create_react_agent("openai:gpt-4.1", tools)
 agent.invoke({
@@ -124,10 +125,10 @@ from claix import ClaixClient
 from claix.integrations.llamaindex import ClaixToolSpec
 
 spec = ClaixToolSpec(client=ClaixClient())
-tools = spec.to_tool_list()  # extract_document, ask_document, ask_knowledge_space
+tools = spec.to_tool_list()  # extract, ask, add/remove space, replace document
 ```
 
-## SDK map (OpenAPI 1.8.2)
+## SDK map
 
 | SDK method | HTTP |
 | --- | --- |
@@ -136,16 +137,24 @@ tools = spec.to_tool_list()  # extract_document, ask_document, ask_knowledge_spa
 | `client.extract.document(...)` | `POST /api/doc-json` or `POST /agent/doc-json` |
 | `client.extract.image(...)` | `POST /api/img-json` or `POST /agent/img-json` |
 | `client.extract.text(content, schema_id, ...)` | `POST /api/txt-json` or `POST /agent/txt-json` |
+| `client.extract.audio(...)` | `POST /api/audio-json` or `POST /agent/audio-json` |
 | `client.extract.json_to_excel(schema_id=..., data=...)` | `POST /api/json-excel` (binary `.xlsx`) |
 | `client.context.get(document_id)` | `GET https://claix.dev/get-document/{document_id}` |
-| `client.context.ask(document_id, questions)` | `POST https://claix.dev/document-context/{document_id}` (max 5 × 400 chars) |
+| `client.context.ask(document_id, questions)` | `POST https://claix.dev/document-context/{document_id}` (max 5 × 400 chars, `{question, format}`) |
 | `client.context.delete(document_id)` | `DELETE https://claix.dev/delete-document/{document_id}` |
+| `client.context.replace(document_id, new_content_document_id)` | `POST https://claix.dev/replace-document` |
 | `client.spaces.create(name)` | `POST https://claix.dev/create-space` |
+| `client.spaces.add(document_id, space_id)` | `POST https://claix.dev/add-space` |
 | `client.spaces.ask(space_id, questions)` | `POST https://claix.dev/space-context/{space_id}` |
+| `client.spaces.remove_document(document_id)` | `DELETE https://claix.dev/remove-document-from-space/{document_id}` |
 | `client.spaces.delete(space_id)` | `DELETE https://claix.dev/delete-space/{space_id}` |
 | `client.schemas.list()` | `GET /api/schemas` |
+| `client.schemas.get(schema_id)` | `GET /api/get-schema/{schema_id}` |
 | `client.schemas.create(name, type, schema_definition, ...)` | `POST /api/create-schema` |
+| `client.schemas.update(schema_id, name, type, schema_definition, ...)` | `PUT /api/update-schema/{schema_id}` |
 | `client.schemas.delete(schema_id)` | `POST /api/delete-schema` |
+
+Questions accept a string (sent as `format: "string"`) or `{"question": "...", "format": "string"|"int"|"boolean"|"timestamp"|"array"}`.
 
 Auth header: `x-api-key` (Bearer is also accepted by the API). Default timeout 120s, with retries on 429/502/503/504 and transport errors.
 

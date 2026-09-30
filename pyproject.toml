@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "claix-ai"
-version = "1.0.0"
-description = "Official Python SDK for the Claix document intelligence API (OpenAPI 1.8.2). Typed extraction, document memory, knowledge spaces, and agent-framework tools."
+version = "1.1.0"
+description = "Official Python SDK for the Claix document intelligence API. Typed extraction, document memory, knowledge spaces, schema management, and agent-framework tools."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -55,7 +55,7 @@ all = [
 Homepage = "https://www.claix.dev"
 Documentation = "https://www.claix.dev/documentation"
 OpenAPI = "https://www.claix.dev/openapi.yaml"
-Source = "https://github.com/Gaelproodoos/claix-interfaz"
+Source = "https://github.com/Gaelproodoos/claix-python"
 
 [tool.hatch.build.targets.wheel]
 packages = ["claix"]

@@ -1,4 +1,4 @@
-"""Official Claix Python SDK (OpenAPI 1.8.2)."""
+"""Official Claix Python SDK."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from claix.models import (
     AgentDocJsonSuccessResponse,
     AgentExcelJsonSuccessResponse,
     AgentImgJsonSuccessResponse,
+    AgentAudioJsonSuccessResponse,
     AgentPdfJsonSuccessResponse,
     CreateSchemaResponse,
     CreateSpaceSuccessResponse,
@@ -28,6 +29,7 @@ from claix.models import (
     ExcelJsonSuccessResponse,
     GetDocumentSuccessResponse,
     ImgJsonSuccessResponse,
+    AudioJsonSuccessResponse,
     PdfJsonSuccessResponse,
     SchemaItem,
     SchemasListResponse,
@@ -49,6 +51,7 @@ __all__ = [
     "AgentDocJsonSuccessResponse",
     "AgentExcelJsonSuccessResponse",
     "AgentImgJsonSuccessResponse",
+    "AgentAudioJsonSuccessResponse",
     "AgentPdfJsonSuccessResponse",
     "CreateSchemaResponse",
     "CreateSpaceSuccessResponse",
@@ -60,6 +63,7 @@ __all__ = [
     "ExcelJsonSuccessResponse",
     "GetDocumentSuccessResponse",
     "ImgJsonSuccessResponse",
+    "AudioJsonSuccessResponse",
     "PdfJsonSuccessResponse",
     "SchemaItem",
     "SchemasListResponse",
@@ -67,4 +71,4 @@ __all__ = [
     "WindowContextSuccessResponse",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

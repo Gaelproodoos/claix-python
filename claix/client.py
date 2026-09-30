@@ -1,4 +1,4 @@
-"""Synchronous and asynchronous Claix HTTP clients (OpenAPI 1.8.2)."""
+"""Synchronous and asynchronous Claix HTTP clients (OpenAPI 1.11.0)."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ DEFAULT_ORIGIN = "https://claix.dev"
 DEFAULT_TIMEOUT = 120.0
 DEFAULT_MAX_RETRIES = 3
 RETRYABLE_STATUS = frozenset({429, 502, 503, 504})
-USER_AGENT = "claix-python/1.0.0"
+USER_AGENT = "claix-python/1.1.0"
 
 
 def _origin_from_base(base_url: str) -> str:
