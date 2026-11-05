@@ -4,13 +4,24 @@
 [![Python](https://img.shields.io/pypi/pyversions/claix-ai.svg)](https://pypi.org/project/claix-ai/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Official typed Python client for the [Claix](https://www.claix.dev) document intelligence API.
+Official Python client for [Claix](https://www.claix.dev), the security layer between your SQL database and AI agents.
 
-Extract PDFs, Excel, Word, images, and text into schema-validated JSON. Query persisted documents and knowledge spaces. Drop the same client into **LangChain / LangGraph**, **CrewAI**, and **LlamaIndex**.
+Claix connects to your database and lets each agent retrieve only the tables and columns you allow, and run only the changes your rules allow. Your data stays where it is. You pay per use, over REST, MCP, or A2A.
 
-- Docs: https://www.claix.dev/documentation
+| | |
+| --- | --- |
+| **Claix Retrieve** | Controlled reads from the live database. The agent asks in plain language and gets raw rows or typed answers. PostgreSQL, MySQL, and MariaDB. `POST /retrieve/{agent_name}` |
+| **Claix Guard** | Checks every `INSERT`, `UPDATE`, and `DELETE` an agent proposes. Returns allow or deny, with the reason. Claix does not run the statement. `POST /check-sql` |
+| **Claix Ingest** | Turns PDFs, Excel, Word, images, audio, and text into schema-validated JSON, and keeps document context and knowledge spaces. **This SDK.** |
+
+This package is the typed client for **Claix Ingest**, with tools for **LangChain / LangGraph**, **CrewAI**, and **LlamaIndex**. Retrieve and Guard are on the Claix HTTP API. This client does not wrap those calls yet.
+
+- Site: https://www.claix.dev
+- Retrieve: https://www.claix.dev/documentation/call-an-agent
+- Guard: https://www.claix.dev/documentation/check-sql
+- Ingest docs: https://www.claix.dev/documentation
+- TypeScript SDK: https://github.com/Gaelproodoos/claix-typescript
 - OpenAPI: https://www.claix.dev/openapi.yaml
-- Agent Card: https://claix.dev/.well-known/agent.json
 
 ## Install
 

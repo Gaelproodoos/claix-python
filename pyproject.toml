@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "claix-ai"
 version = "1.1.0"
-description = "Official Python SDK for the Claix document intelligence API. Typed extraction, document memory, knowledge spaces, schema management, and agent-framework tools."
+description = "Official Python SDK for Claix, the security layer between your SQL database and AI agents. This client covers Claix Ingest: typed extraction, document context, knowledge spaces, schema management, and LangChain, CrewAI, and LlamaIndex tools."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
