@@ -10,11 +10,11 @@ Claix connects to your database and lets each agent retrieve only the tables and
 
 | | |
 | --- | --- |
-| **Claix Retrieve** | Controlled reads from the live database. The agent asks in plain language and gets raw rows or typed answers. PostgreSQL, MySQL, and MariaDB. `POST /retrieve/{agent_name}` |
-| **Claix Guard** | Checks every `INSERT`, `UPDATE`, and `DELETE` an agent proposes. Returns allow or deny, with the reason. Claix does not run the statement. `POST /check-sql` |
-| **Claix Ingest** | Turns PDFs, Excel, Word, images, audio, and text into schema-validated JSON, and keeps document context and knowledge spaces. **This SDK.** |
+| **Claix Retrieve** | Controlled reads from the live database. The agent asks in plain language and gets raw rows or typed answers. PostgreSQL, MySQL, and MariaDB. `client.retrieve.ask` → `POST /retrieve/{agent_name}` |
+| **Claix Guard** | Checks every `INSERT`, `UPDATE`, and `DELETE` an agent proposes. Returns allow or deny, with the reason. Claix does not run the statement. `client.guard.check` → `POST /check-sql` |
+| **Claix Ingest** | Turns PDFs, Excel, Word, images, audio, and text into schema-validated JSON, and keeps document context and knowledge spaces. |
 
-This package is the typed client for **Claix Ingest**, with tools for **LangChain / LangGraph**, **CrewAI**, and **LlamaIndex**. Retrieve and Guard are on the Claix HTTP API. This client does not wrap those calls yet.
+Retrieve and Guard are the primary calls. Ingest remains on the same client, with tools for **LangChain / LangGraph**, **CrewAI**, and **LlamaIndex**.
 
 - Site: https://www.claix.dev
 - Retrieve: https://www.claix.dev/documentation/call-an-agent
@@ -41,6 +41,29 @@ Requires **Python ≥ 3.10**. Set `CLAIX_API_KEY` or pass `api_key=` to the clie
 from claix import ClaixClient
 
 client = ClaixClient()  # reads CLAIX_API_KEY
+
+answers = client.retrieve.ask(
+    "orders-agent",
+    [
+        {"question": "How many orders are confirmed?", "format": "int"},
+        "What is the name of the customer with the most orders?",
+    ],
+)
+print(answers.ia_response, answers.log_id)
+
+decision = client.guard.check(
+    "UPDATE orders SET discount = $1 WHERE id = $2",
+    params=[0.35, 90421],
+)
+if decision.allowed:
+    print(decision.decision_id)  # your code runs the statement
+else:
+    print(decision.code, decision.reason)  # Claix did not run it
+```
+
+Ingest:
+
+```python
 result = client.extract.pdf("invoice.pdf", schema_id="3c7a9f21-4b8e-4d1a-9c6f-2e0d8a5b7c4f")
 print(result.data)
 ```
@@ -143,6 +166,8 @@ tools = spec.to_tool_list()  # extract, ask, add/remove space, replace document
 
 | SDK method | HTTP |
 | --- | --- |
+| `client.retrieve.ask(agent_name, questions)` | `POST /retrieve/{agent_name}` |
+| `client.guard.check(sql, params=None, connection_id=None)` | `POST /check-sql` |
 | `client.extract.pdf(file, schema_id, space_id=None, is_agent_mode=False)` | `POST /api/pdf-json` or `POST /agent/pdf-json` |
 | `client.extract.excel(...)` | `POST /api/excel-json` or `POST /agent/excel-json` |
 | `client.extract.document(...)` | `POST /api/doc-json` or `POST /agent/doc-json` |
@@ -165,7 +190,11 @@ tools = spec.to_tool_list()  # extract, ask, add/remove space, replace document
 | `client.schemas.update(schema_id, name, type, schema_definition, ...)` | `PUT /api/update-schema/{schema_id}` |
 | `client.schemas.delete(schema_id)` | `POST /api/delete-schema` |
 
-Questions accept a string (sent as `format: "string"`) or `{"question": "...", "format": "string"|"int"|"boolean"|"timestamp"|"array"}`.
+Retrieve questions accept a string (sent as `format: "string"`) or `{"question", "format"}` with `string`, `int`, `boolean`, `timestamp`, `timestamptz`, `date`, `json`, `array:string`, or `array:int`. Up to 5 questions, 400 characters each. In raw mode `format` is ignored and each answer is `{rows, truncated}`.
+
+Guard reads `allowed`. A denial is still HTTP 200. `connection_id` is required only when the account has more than one active connection. PostgreSQL placeholders are `$1`, `$2`. MySQL and MariaDB use `?`.
+
+Document and space questions accept a string or `{"question", "format"}` with `string`, `int`, `boolean`, `timestamp`, or `array`.
 
 Auth header: `x-api-key` (Bearer is also accepted by the API). Default timeout 120s, with retries on 429/502/503/504 and transport errors.
 

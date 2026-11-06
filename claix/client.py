@@ -1,4 +1,4 @@
-"""Synchronous and asynchronous Claix HTTP clients (OpenAPI 1.11.0)."""
+"""Synchronous and asynchronous Claix HTTP clients."""
 
 from __future__ import annotations
 
@@ -23,6 +23,8 @@ from claix.exceptions import (
 )
 from claix.resources.context import AsyncContextResource, ContextResource
 from claix.resources.extraction import AsyncExtractionResource, ExtractionResource
+from claix.resources.guard import AsyncGuardResource, GuardResource
+from claix.resources.retrieve import AsyncRetrieveResource, RetrieveResource
 from claix.resources.schemas import AsyncSchemasResource, SchemasResource
 from claix.resources.spaces import AsyncSpacesResource, SpacesResource
 
@@ -31,7 +33,7 @@ DEFAULT_ORIGIN = "https://claix.dev"
 DEFAULT_TIMEOUT = 120.0
 DEFAULT_MAX_RETRIES = 3
 RETRYABLE_STATUS = frozenset({429, 502, 503, 504})
-USER_AGENT = "claix-python/1.1.0"
+USER_AGENT = "claix-python/1.2.0"
 
 
 def _origin_from_base(base_url: str) -> str:
@@ -58,7 +60,7 @@ def raise_for_status(response: httpx.Response) -> None:
     detalle = ""
     if isinstance(payload, dict):
         error_text = str(payload.get("error") or "")
-        detalle = str(payload.get("detalle") or "")
+        detalle = str(payload.get("detalle") or payload.get("message") or "")
     message = error_text or detalle or f"Claix API error (HTTP {status})"
     if error_text and detalle and detalle not in error_text:
         message = f"{error_text} ({detalle})"
@@ -94,7 +96,7 @@ class ClaixClient:
     Auth: ``api_key`` argument or ``CLAIX_API_KEY`` environment variable.
     Header: ``x-api-key``.
     Default base: ``https://claix.dev/api``.
-    Context and space endpoints use the site origin ``https://claix.dev``.
+    Retrieve, Guard, context, and space endpoints use ``https://claix.dev``.
     """
 
     def __init__(
@@ -123,6 +125,8 @@ class ClaixClient:
             headers=self._default_headers(),
             follow_redirects=True,
         )
+        self.retrieve = RetrieveResource(self)
+        self.guard = GuardResource(self)
         self.extract = ExtractionResource(self)
         self.context = ContextResource(self)
         self.spaces = SpacesResource(self)
@@ -249,6 +253,8 @@ class AsyncClaixClient:
             },
             follow_redirects=True,
         )
+        self.retrieve = AsyncRetrieveResource(self)
+        self.guard = AsyncGuardResource(self)
         self.extract = AsyncExtractionResource(self)
         self.context = AsyncContextResource(self)
         self.spaces = AsyncSpacesResource(self)

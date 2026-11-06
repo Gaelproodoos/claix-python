@@ -269,3 +269,38 @@ class JsonExcelEnvelopeRequest(ClaixModel):
     schema_id: str
     data: list[dict[str, Any]] | None = None
     records: list[dict[str, Any]] | None = None
+
+
+class RetrieveSuccessResponse(ClaixModel):
+    """POST /retrieve/{agent_name}. Claix runs the read. Your data stays in place."""
+
+    user_ask: list[Any] = Field(default_factory=list)
+    ia_response: list[Any] = Field(
+        default_factory=list,
+        description="Aligned with user_ask: a typed value, {rows, truncated}, or {error}.",
+    )
+    log_id: str | None = None
+
+
+class GuardViolation(ClaixModel):
+    guard_id: str | None = None
+    guard_name: str | None = None
+    rule_id: str | None = None
+    rule_title: str | None = None
+    code: str | None = None
+    message: str | None = None
+
+
+class CheckSqlResponse(ClaixModel):
+    """POST /check-sql. HTTP 200 covers allow and deny. Claix does not run the statement."""
+
+    allowed: bool
+    decision_id: str | None = None
+    code: str | None = None
+    reason: str | None = None
+    operation: str | None = None
+    table: str | None = None
+    affected_rows: int | None = None
+    violations: list[GuardViolation] = Field(default_factory=list)
+    rules_checked: int | None = None
+    latency_ms: int | None = None

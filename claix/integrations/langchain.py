@@ -242,3 +242,94 @@ class ClaixReplaceDocumentTool(_LangChainBaseTool):  # type: ignore[misc]
 
     async def _arun(self, document_id: str, new_content_document_id: str) -> str:
         return self._run(document_id, new_content_document_id)
+
+
+class ClaixRetrieveQuestion(BaseModel):
+    question: str = Field(description="Question, at most 400 characters.")
+    format: str = Field(
+        default="string",
+        description="string, int, boolean, timestamp, timestamptz, date, json, array:string, or array:int.",
+    )
+
+
+class ClaixRetrieveArgs(BaseModel):
+    agent_name: str = Field(description="Retrieve agent slug, the last segment of POST /retrieve/{agent_name}.")
+    questions: list[ClaixRetrieveQuestion] = Field(
+        description="1 to 5 questions. The agent reads only the tables and columns you allowed."
+    )
+
+
+class ClaixGuardArgs(BaseModel):
+    sql: str = Field(description="One INSERT, UPDATE, or DELETE the agent proposes. Claix does not run it.")
+    params: list[Any] | None = Field(
+        default=None,
+        description="Placeholder values in order. PostgreSQL uses $1, MySQL and MariaDB use ?.",
+    )
+    connection_id: str | None = Field(
+        default=None,
+        description="Required only when the account has more than one active connection.",
+    )
+
+
+class ClaixRetrieveTool(_LangChainBaseTool):  # type: ignore[misc]
+    """Ask a Claix Retrieve agent for live, allowlisted database answers."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
+    name: str = "claix_retrieve"
+    description: str = (
+        "Ask a Claix Retrieve agent a question about the live database. "
+        "The agent can read only the tables and columns you allowed. "
+        "POST /retrieve/{agent_name}."
+    )
+    args_schema: type[BaseModel] = ClaixRetrieveArgs
+    client: ClaixClient | None = None
+
+    def __init__(self, client: ClaixClient | None = None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.client = client or ClaixClient()
+
+    def _run(self, agent_name: str, questions: list[ClaixRetrieveQuestion | dict[str, Any]]) -> str:
+        result = (self.client or ClaixClient()).retrieve.ask(agent_name, questions)
+        return result.model_dump_json()
+
+    async def _arun(self, agent_name: str, questions: list[ClaixRetrieveQuestion | dict[str, Any]]) -> str:
+        return self._run(agent_name, questions)
+
+
+class ClaixGuardTool(_LangChainBaseTool):  # type: ignore[misc]
+    """Check a proposed write. Claix answers allow or deny and does not execute SQL."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
+    name: str = "claix_guard"
+    description: str = (
+        "Check an INSERT, UPDATE, or DELETE before running it. "
+        "Claix answers allow or deny with the reason and never executes the statement. "
+        "POST /check-sql. Run the SQL yourself only when allowed is true."
+    )
+    args_schema: type[BaseModel] = ClaixGuardArgs
+    client: ClaixClient | None = None
+
+    def __init__(self, client: ClaixClient | None = None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.client = client or ClaixClient()
+
+    def _run(
+        self,
+        sql: str,
+        params: list[Any] | None = None,
+        connection_id: str | None = None,
+    ) -> str:
+        result = (self.client or ClaixClient()).guard.check(
+            sql, params=params, connection_id=connection_id
+        )
+        return result.model_dump_json()
+
+    async def _arun(
+        self,
+        sql: str,
+        params: list[Any] | None = None,
+        connection_id: str | None = None,
+    ) -> str:
+        return self._run(sql, params, connection_id)

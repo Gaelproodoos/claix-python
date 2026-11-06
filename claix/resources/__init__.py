@@ -12,6 +12,21 @@ from claix.exceptions import ClaixValidationError
 FileInput = str | Path | bytes | bytearray | BinaryIO | tuple[str, bytes]
 QuestionFormat = str
 QUESTION_FORMATS = frozenset({"string", "int", "boolean", "timestamp", "array"})
+RETRIEVE_QUESTION_FORMATS = frozenset(
+    {
+        "string",
+        "int",
+        "boolean",
+        "timestamp",
+        "timestamptz",
+        "timestampz",
+        "date",
+        "json",
+        "array",
+        "array:string",
+        "array:int",
+    }
+)
 QuestionInput = str | Mapping[str, Any]
 
 
@@ -37,6 +52,43 @@ def validate_questions(questions: Sequence[QuestionInput]) -> list[dict[str, str
         if fmt not in QUESTION_FORMATS:
             raise ClaixValidationError(
                 f"format must be one of: {', '.join(sorted(QUESTION_FORMATS))} (got {fmt!r})."
+            )
+        cleaned.append({"question": question, "format": fmt})
+    if not cleaned:
+        raise ClaixValidationError("At least one question is required.")
+    if len(cleaned) > 5:
+        raise ClaixValidationError("A maximum of 5 questions is allowed per call.")
+    for item in cleaned:
+        if len(item["question"]) > 400:
+            raise ClaixValidationError(
+                f"Each question must be at most 400 characters (got {len(item['question'])})."
+            )
+    return cleaned
+
+
+def validate_retrieve_questions(questions: Sequence[QuestionInput]) -> list[dict[str, str]]:
+    """Normalize Retrieve questions. A plain string is sent as ``format: "string"``."""
+    cleaned: list[dict[str, str]] = []
+    for raw in questions:
+        if isinstance(raw, str):
+            question = raw.strip()
+            fmt = "string"
+        elif isinstance(raw, Mapping):
+            question = str(raw.get("question") or "").strip()
+            fmt = str(raw.get("format") or "string").strip()
+        elif hasattr(raw, "question"):
+            question = str(getattr(raw, "question") or "").strip()
+            fmt = str(getattr(raw, "format", None) or "string").strip()
+        else:
+            raise ClaixValidationError(
+                "Each question must be a string or an object with question and format."
+            )
+        if not question:
+            continue
+        if fmt not in RETRIEVE_QUESTION_FORMATS:
+            raise ClaixValidationError(
+                "format must be one of: "
+                f"{', '.join(sorted(RETRIEVE_QUESTION_FORMATS))} (got {fmt!r})."
             )
         cleaned.append({"question": question, "format": fmt})
     if not cleaned:

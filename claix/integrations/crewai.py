@@ -183,3 +183,76 @@ class ClaixReplaceDocumentTool(_CrewBaseTool):  # type: ignore[misc]
             document_id, new_content_document_id
         )
         return result.model_dump_json()
+
+
+class ClaixRetrieveQuestion(BaseModel):
+    question: str = Field(description="Question, at most 400 characters.")
+    format: str = Field(
+        default="string",
+        description="string, int, boolean, timestamp, timestamptz, date, json, array:string, or array:int.",
+    )
+
+
+class ClaixRetrieveArgs(BaseModel):
+    agent_name: str = Field(description="Retrieve agent slug.")
+    questions: list[ClaixRetrieveQuestion] = Field(description="1 to 5 questions against the allowlisted tables.")
+
+
+class ClaixGuardArgs(BaseModel):
+    sql: str = Field(description="One proposed INSERT, UPDATE, or DELETE. Claix does not run it.")
+    params: list[Any] | None = Field(default=None, description="Placeholder values in order.")
+    connection_id: str | None = Field(
+        default=None,
+        description="Required only when the account has more than one active connection.",
+    )
+
+
+class ClaixRetrieveTool(_CrewBaseTool):  # type: ignore[misc]
+    """Ask a Claix Retrieve agent."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
+    name: str = "claix_retrieve"
+    description: str = (
+        "Ask a Claix Retrieve agent about the live database. "
+        "It can read only the tables and columns you allowed."
+    )
+    args_schema: Type[BaseModel] = ClaixRetrieveArgs
+    client: ClaixClient | None = None
+
+    def __init__(self, client: ClaixClient | None = None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.client = client or ClaixClient()
+
+    def _run(self, agent_name: str, questions: list[ClaixRetrieveQuestion | dict[str, Any]]) -> str:
+        result = (self.client or ClaixClient()).retrieve.ask(agent_name, questions)
+        return result.model_dump_json()
+
+
+class ClaixGuardTool(_CrewBaseTool):  # type: ignore[misc]
+    """Check a proposed write. The answer is allow or deny. Claix does not execute SQL."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
+
+    name: str = "claix_guard"
+    description: str = (
+        "Check an INSERT, UPDATE, or DELETE before your code runs it. "
+        "Claix answers allow or deny with the reason and never executes the statement."
+    )
+    args_schema: Type[BaseModel] = ClaixGuardArgs
+    client: ClaixClient | None = None
+
+    def __init__(self, client: ClaixClient | None = None, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.client = client or ClaixClient()
+
+    def _run(
+        self,
+        sql: str,
+        params: list[Any] | None = None,
+        connection_id: str | None = None,
+    ) -> str:
+        result = (self.client or ClaixClient()).guard.check(
+            sql, params=params, connection_id=connection_id
+        )
+        return result.model_dump_json()
